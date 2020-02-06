@@ -9,16 +9,28 @@ typedef struct swtodo {
 } swtodo_t;
 
 
-int main() {
+int main(int argc, char * argv[]) {
 
-	swtodo_t *mytodo;
 
-	mytodo = malloc(sizeof(swtodo_t));
+	swtodo_t *mytodos = (swtodo_t*)malloc(sizeof(swtodo_t *) * argc);
+	assert(mytodos != NULL);
 
-	assert(mytodo != NULL);
+	for (int i = 0; i < argc; i++) {
+		swtodo_t *mytodo;
 
-	mytodo->flags = 0;
-	mytodo->title = "title";
+		mytodo = malloc(sizeof(swtodo_t));
+
+		assert(mytodo != NULL);
+
+		mytodo->flags = 0;
+		mytodo->title = argv[i];
+
+		mytodos[i] = *mytodo;
+	}
+
+	for (int i = 0; i < argc; i++) {
+		printf("mytodo %d is %s\n", i, mytodos[i].title);
+	}
 
 	return 0;
 }
