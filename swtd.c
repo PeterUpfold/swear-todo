@@ -42,7 +42,6 @@ int main(int argc, char * argv[]) {
 
 	while ((current_char != KEY_F(1))) {
 		current_char = getch();
-		printf("char: %d", current_char);
 		switch(current_char) {
 			case KEY_DOWN:
 			menu_driver(swtd_menu, REQ_DOWN_ITEM);
