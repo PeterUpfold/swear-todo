@@ -44,6 +44,8 @@
             "label": "gcc-8 build active file",
             "command": "/usr/bin/gcc-8",
             "args": [
+                "-lncurses",
+                "-lmenu"
                 "-g",
                 "${file}",
                 "-o",
