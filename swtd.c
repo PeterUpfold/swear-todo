@@ -2,11 +2,12 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <assert.h>
+#include <string.h>
 
 #include <curses.h>
 #include <menu.h>
 
-
+#include "swtd.h"
 #include "swtd_strings.h"
 
 typedef struct swtodo {
@@ -62,13 +63,13 @@ int main(int argc, char * argv[]) {
 				//printf("loop over %s\n", item_name(items[i]));
 
 				if (current_item(swtd_menu) == items[i]) {
-					if (strcmp(item_name(items[i]), SWTD_NEW) == 0) {
+					if (strncmp(item_name(items[i]), SWTD_NEW, sizeof(item_name(items[i]))) == 0) {
 						// handle new item
-
+						new_pressed();
 					}
-					else if (strcmp(item_name(items[i]), SWTD_EDIT) == 0) {
+					else if (strncmp(item_name(items[i]), SWTD_EDIT, sizeof(item_name(items[i]))) == 0) {
 						// handle edit
-						
+
 					}
 				}
 			}
@@ -103,4 +104,20 @@ int main(int argc, char * argv[]) {
 	}*/
 
 	return 0;
+}
+
+/*
+ * Handle the pressing of the new item menu item.
+ * 
+ */
+void new_pressed() {
+	// new item 
+	ITEM *the_new_item;
+	the_new_item = new_item(SWTD_UNTITLED, SWTD_UNTITLED);
+
+	swtodo_t *mytodo;
+	mytodo = malloc(sizeof(swtodo_t));
+	assert(mytodo != NULL);
+
+	mvprintw(LINES - 3, 0, "New item spawned");
 }

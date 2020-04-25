@@ -2,3 +2,4 @@
 swtd
 helloworld
 *.o
+*.i64
