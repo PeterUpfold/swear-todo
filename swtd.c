@@ -71,7 +71,7 @@ int main(int argc, char * argv[]) {
 					}
 					else {
 						// handle edit
-						edit_pressed(item_name(items[i]), items[i]);
+						edit_pressed(item_name(items[i]), items[i], i-1 /* excl. NEW */);
 					}
 				}
 			}
@@ -122,6 +122,16 @@ void new_pressed() {
 		current_list_item->next = new_list_item;
 	}	
 
+	build_refreshed_menu();
+
+	//trace_output("New item spawned");
+}
+
+/**
+ * Rebuild the menu with new items, cleaning the old
+ * one and forcing a screen refresh.
+ */
+void build_refreshed_menu() {
 	ITEM ** our_menu_items;
 	our_menu_items = build_menu_items();
 
@@ -129,8 +139,6 @@ void new_pressed() {
 	swtd_menu = new_menu((ITEM **)our_menu_items);
 	refresh();
 	post_menu(swtd_menu);
-
-	//trace_output("New item spawned");
 }
 
 /**
@@ -149,9 +157,9 @@ ITEM ** build_menu_items() {
 		} while (current_item != NULL);
 	}
 
-	char trace_string[32];
-	snprintf(trace_string, 32, "item count: %d", item_count);
-	trace_output(trace_string);
+	//char trace_string[32];
+	//snprintf(trace_string, 32, "item count: %d", item_count);
+	//trace_output(trace_string);
 
 	our_menu_items = (ITEM **)calloc(item_count + 2 /* size of plus one null item */, sizeof(ITEM *));
 
@@ -184,6 +192,13 @@ void trace_output(const char * trace_string) {
 }
 
 /**
+ * Output an instruction on screen to the user.
+ */
+void instruction_line(const char * instruction_string) {
+	mvprintw(LINES - 2, 0, instruction_string);
+}
+
+/**
  * Clean up old menu.
  */
 void tidy_menu() {
@@ -201,10 +216,29 @@ void tidy_menu() {
 /**
  * Handle pressing the edit button.
  */
-void edit_pressed(const char * item_name, ITEM * item) {
+void edit_pressed(const char * item_name, ITEM * item, int index) {
 	char new_name[128];
 
+	assert(index >= 0);
+	assert(todo_list != NULL);
+
+	instruction_line(SWTD_RENAME);
+	echo();
 	getnstr(new_name, 128);
+	noecho();
+	instruction_line("                         ");
+
+	// find item and rename it
+	swtodo_list_t *current_list_item = todo_list;
+	for (int i = 0; i < index; i++) {
+		current_list_item = current_list_item->next;
+	}
+
+	swtodo_t *target = current_list_item->todo;
+	target->title = new_name;
+
+	// refresh menu
+	build_refreshed_menu();
 
 	trace_output(new_name);
 }
