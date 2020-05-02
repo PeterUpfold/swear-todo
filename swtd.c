@@ -69,9 +69,9 @@ int main(int argc, char * argv[]) {
 						// handle new item
 						new_pressed();
 					}
-					else if (strncmp(item_name(items[i]), SWTD_EDIT, sizeof(item_name(items[i]))) == 0) {
+					else {
 						// handle edit
-
+						edit_pressed(item_name(items[i]), items[i]);
 					}
 				}
 			}
@@ -79,32 +79,8 @@ int main(int argc, char * argv[]) {
 		}
 	}
 
-	//free_item(our_menu_items[0]);
-	//free_item(our_menu_items[1]);
-	//free_item(our_menu_items[2]);
-	free_menu(swtd_menu);
+	tidy_menu();
 	endwin();
-
-	/*swtodo_t *mytodos = (swtodo_t*)malloc(sizeof(swtodo_t *) * argc);
-	assert(mytodos != NULL);
-
-	for (int i = 0; i < argc; i++) {
-		swtodo_t *mytodo;
-
-		mytodo = malloc(sizeof(swtodo_t));
-
-		assert(mytodo != NULL);
-
-		mytodo->flags = 0;
-		mytodo->title = argv[i];
-
-		mytodos[i] = *mytodo;
-	}
-
-	for (int i = 0; i < argc; i++) {
-		printf("mytodo %d is %s\n", i, mytodos[i].title);
-	}*/
-
 	return 0;
 }
 
@@ -149,7 +125,8 @@ void new_pressed() {
 	ITEM ** our_menu_items;
 	our_menu_items = build_menu_items();
 
-	swtd_menu = new_menu((ITEM **)our_menu_items); //TODO tidy old menu
+	tidy_menu(swtd_menu);
+	swtd_menu = new_menu((ITEM **)our_menu_items);
 	refresh();
 	post_menu(swtd_menu);
 
@@ -204,4 +181,30 @@ ITEM ** build_menu_items() {
  */
 void trace_output(const char * trace_string) {
 		mvprintw(LINES - 3, 0, trace_string);
+}
+
+/**
+ * Clean up old menu.
+ */
+void tidy_menu() {
+	assert(swtd_menu != NULL);
+
+	ITEM ** items = menu_items(swtd_menu);
+	for (int i = 0; i < item_count(swtd_menu); i++) {
+		assert(items[i] != NULL);
+		free_item(items[i]);
+	}
+
+	free_menu(swtd_menu);
+}
+
+/**
+ * Handle pressing the edit button.
+ */
+void edit_pressed(const char * item_name, ITEM * item) {
+	char new_name[128];
+
+	getnstr(new_name, 128);
+
+	trace_output(new_name);
 }
