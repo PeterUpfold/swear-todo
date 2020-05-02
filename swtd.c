@@ -150,6 +150,8 @@ void new_pressed() {
 	our_menu_items = build_menu_items();
 
 	swtd_menu = new_menu((ITEM **)our_menu_items); //TODO tidy old menu
+	refresh();
+	post_menu(swtd_menu);
 
 	//trace_output("New item spawned");
 }
@@ -179,12 +181,21 @@ ITEM ** build_menu_items() {
 	our_menu_items[0] = new_item(SWTD_NEW, SWTD_NEW);
 	//our_menu_items[1] = new_item(SWTD_EDIT, SWTD_EDIT);
 
-	int i = 1;
-	for (i = 1; i < item_count; i++) {
-		//our_menu_items[i] = new_item()
+	int i = 0;
+	swtodo_list_t *current_item = todo_list;
+	for (i = 0; i < item_count; i++) {
+		// follow the pointers from todo_list
+		assert(current_item != NULL);
+
+		swtodo_t *current_todo = current_item->todo;
+		assert(current_todo != NULL);
+		
+		our_menu_items[i+1] = new_item(current_todo->title, current_todo->title);
+
+		current_item = current_item->next;
 	}
 
-	our_menu_items[i] = (ITEM *)NULL;
+	our_menu_items[i+1] = (ITEM *)NULL;
 	return our_menu_items;
 }
 
