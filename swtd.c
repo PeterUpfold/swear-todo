@@ -15,12 +15,18 @@ typedef struct swtodo {
 	char * title;
 } swtodo_t;
 
+typedef struct swtodo_list {
+	swtodo_t * todo;
+	struct swtodo_list * next;
+} swtodo_list_t;
+
+MENU *swtd_menu;
+swtodo_list_t *todo_list;
 
 int main(int argc, char * argv[]) {
 
 
 	ITEM **our_menu_items;
-	MENU *swtd_menu;
 	int current_char = -1;
 	ITEM **items;
 
@@ -33,11 +39,7 @@ int main(int argc, char * argv[]) {
 	keypad(stdscr, TRUE);
 	init_pair(1, COLOR_RED, COLOR_BLACK);
 
-	our_menu_items = (ITEM **)calloc(3 /* size of plus one null item */, sizeof(ITEM *));
-
-	our_menu_items[0] = new_item(SWTD_NEW, SWTD_NEW);
-	our_menu_items[1] = new_item(SWTD_EDIT, SWTD_EDIT);
-	our_menu_items[2] = (ITEM *)NULL;
+	our_menu_items = build_menu_items();
 
 	swtd_menu = new_menu((ITEM **)our_menu_items);
 
@@ -77,9 +79,9 @@ int main(int argc, char * argv[]) {
 		}
 	}
 
-	free_item(our_menu_items[0]);
-	free_item(our_menu_items[1]);
-	free_item(our_menu_items[2]);
+	//free_item(our_menu_items[0]);
+	//free_item(our_menu_items[1]);
+	//free_item(our_menu_items[2]);
 	free_menu(swtd_menu);
 	endwin();
 
@@ -118,6 +120,77 @@ void new_pressed() {
 	swtodo_t *mytodo;
 	mytodo = malloc(sizeof(swtodo_t));
 	assert(mytodo != NULL);
+	mytodo->flags = 0;
+	mytodo->title = SWTD_UNTITLED;
 
-	mvprintw(LINES - 3, 0, "New item spawned");
+	// init todo_list
+	if (todo_list == NULL) {
+		todo_list = malloc(sizeof(swtodo_list_t));
+		assert(todo_list != NULL);
+		todo_list->todo = mytodo;
+		todo_list->next = NULL;
+	}
+	else {
+		// find the end of todo_list by traversing through
+		swtodo_list_t *current_list_item = todo_list;
+		while (current_list_item->next != NULL) {
+			current_list_item = current_list_item->next;
+		}
+		
+		// create a new list item -- set next of previous to that item
+		swtodo_list_t *new_list_item = malloc(sizeof(swtodo_list_t));
+		assert(new_list_item != NULL);
+
+		new_list_item->todo = mytodo;
+		new_list_item->next = NULL;
+		current_list_item->next = new_list_item;
+	}	
+
+	ITEM ** our_menu_items;
+	our_menu_items = build_menu_items();
+
+	swtd_menu = new_menu((ITEM **)our_menu_items); //TODO tidy old menu
+
+	//trace_output("New item spawned");
+}
+
+/**
+ * Build menu items from current todo list.
+ */
+ITEM ** build_menu_items() {
+	ITEM **our_menu_items;
+
+	int item_count = 0;
+
+	if (todo_list != NULL) {
+		swtodo_list_t *current_item = todo_list;
+		do {
+			current_item = current_item->next;
+			item_count++;
+		} while (current_item != NULL);
+	}
+
+	char trace_string[32];
+	snprintf(trace_string, 32, "item count: %d", item_count);
+	trace_output(trace_string);
+
+	our_menu_items = (ITEM **)calloc(item_count + 2 /* size of plus one null item */, sizeof(ITEM *));
+
+	our_menu_items[0] = new_item(SWTD_NEW, SWTD_NEW);
+	//our_menu_items[1] = new_item(SWTD_EDIT, SWTD_EDIT);
+
+	int i = 1;
+	for (i = 1; i < item_count; i++) {
+		//our_menu_items[i] = new_item()
+	}
+
+	our_menu_items[i] = (ITEM *)NULL;
+	return our_menu_items;
+}
+
+/**
+ * Output tracing information
+ */
+void trace_output(const char * trace_string) {
+		mvprintw(LINES - 3, 0, trace_string);
 }
