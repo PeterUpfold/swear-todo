@@ -235,9 +235,10 @@ void edit_pressed(const char * item_name, ITEM * item, int index) {
 	}
 
 	swtodo_t *target = current_list_item->todo;
-	target->title = new_name;
+	target->title = strdup(new_name);
 
 	// refresh menu
+	tidy_menu();
 	build_refreshed_menu();
 
 	trace_output(new_name);
