@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <assert.h>
 #include <string.h>
+#include <ctype.h>
 
 #include <curses.h>
 #include <menu.h>
@@ -222,11 +223,33 @@ void edit_pressed(const char * item_name, ITEM * item, int index) {
 	assert(index >= 0);
 	assert(todo_list != NULL);
 
+	instruction_line("                         ");
 	instruction_line(SWTD_RENAME);
 	echo();
 	getnstr(new_name, 128);
 	noecho();
 	instruction_line("                         ");
+
+	if (strlen(new_name) < 1) {
+		instruction_line(SWTD_RENAME_ZEROLENGTH);
+		// refresh menu
+		tidy_menu();
+		build_refreshed_menu();
+		return;
+	}
+
+	// find non-printable characters and reject?
+	char * strpointer = &new_name;
+	do {
+		if (!isprint((int)*strpointer)) {
+			instruction_line(SWTD_RENAME_NONPRINTABLE);
+			// refresh menu
+			tidy_menu();
+			build_refreshed_menu();
+			return;
+		}
+		strpointer++;
+	} while (*strpointer != '\0');
 
 	// find item and rename it
 	swtodo_list_t *current_list_item = todo_list;
@@ -235,7 +258,7 @@ void edit_pressed(const char * item_name, ITEM * item, int index) {
 	}
 
 	swtodo_t *target = current_list_item->todo;
-	target->title = strdup(new_name);
+	target->title = strdup(new_name); // when do we need to free() this?
 
 	// refresh menu
 	tidy_menu();

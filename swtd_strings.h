@@ -3,3 +3,5 @@
 #define SWTD_F1_TO_EXIT "F1 to exit"
 #define SWTD_UNTITLED "[untitled]"
 #define SWTD_RENAME "Rename: "
+#define SWTD_RENAME_ZEROLENGTH "The new name must be at least 1 character long"
+#define SWTD_RENAME_NONPRINTABLE "The new name contains non-printable characters"
