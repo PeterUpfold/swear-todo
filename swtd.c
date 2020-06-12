@@ -24,9 +24,18 @@ typedef struct swtodo_list {
 
 MENU *swtd_menu;
 swtodo_list_t *todo_list;
+sqlite3* db;
 
 int main(int argc, char * argv[]) {
 
+	// open database
+	int db_open_return = sqlite3_open("swtd.db", &db);
+	if (db_open_return) {
+		fprintf(stderr, "Failed to open database ./swtd.db");
+		return db_open_return;
+	}
+
+	populate_list_from_db();
 
 	ITEM **our_menu_items;
 	int current_char = -1;
@@ -81,6 +90,7 @@ int main(int argc, char * argv[]) {
 		}
 	}
 
+	sqlite3_close(db);
 	tidy_menu();
 	endwin();
 	return 0;
@@ -278,3 +288,30 @@ void edit_pressed(const char * item_name, ITEM * item, int index) {
 
 	trace_output(new_name);
 }
+
+/**
+ * Receive a row of data from SQLite.
+ */
+int populate_callback(void* opaque_data, int column_count, char** result_columns, char** column_names) {
+	fprintf(stderr, "%d", column_count);
+}
+
+/**
+ * Build the global swtodo_list_t from the SQLite database.
+ */
+void populate_list_from_db() {
+	char *err_msg = 0;
+
+	sqlite3_exec(db,
+	"SELECT * FROM todos",
+	&populate_callback,
+	NULL,
+	&err_msg
+	);
+
+	if (err_msg != NULL) {
+		fprintf(stderr, "%s\n", err_msg);
+		sqlite3_free(err_msg);
+	}
+}
+

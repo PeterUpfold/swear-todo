@@ -1,7 +1,7 @@
 CC=gcc
 
 swtd:
-	$(CC) -g -o swtd -lncurses -lmenu swtd.c
+	$(CC) -g -o swtd -lncurses -lmenu -lsqlite3 swtd.c
 	# release switches -- -O2 -s (no -g)
 
 clean:

@@ -3,3 +3,4 @@ swtd
 helloworld
 *.o
 *.i64
+*.db
