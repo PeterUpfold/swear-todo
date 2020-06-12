@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <string.h>
 #include <ctype.h>
+#include <sqlite3.h>
 
 #include <curses.h>
 #include <menu.h>
@@ -82,6 +83,21 @@ int main(int argc, char * argv[]) {
 
 	tidy_menu();
 	endwin();
+	return 0;
+}
+
+/**
+ * Detect whether non-printable characters are included within
+ * the string
+ */
+int contains_nonprintables(char * new_name) {
+	char * strpointer = &new_name;
+	do {
+		if (!isprint((int)*strpointer)) {
+			return 1;	
+		}
+		strpointer++;
+	} while (*strpointer != '\0');
 	return 0;
 }
 
@@ -239,17 +255,13 @@ void edit_pressed(const char * item_name, ITEM * item, int index) {
 	}
 
 	// find non-printable characters and reject?
-	char * strpointer = &new_name;
-	do {
-		if (!isprint((int)*strpointer)) {
-			instruction_line(SWTD_RENAME_NONPRINTABLE);
-			// refresh menu
-			tidy_menu();
-			build_refreshed_menu();
-			return;
-		}
-		strpointer++;
-	} while (*strpointer != '\0');
+	if (contains_nonprintables(&new_name)) {
+		instruction_line(SWTD_RENAME_NONPRINTABLE);
+		// refresh menu
+		tidy_menu();
+		build_refreshed_menu();
+		return;
+	}
 
 	// find item and rename it
 	swtodo_list_t *current_list_item = todo_list;
