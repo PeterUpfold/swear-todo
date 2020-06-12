@@ -293,7 +293,49 @@ void edit_pressed(const char * item_name, ITEM * item, int index) {
  * Receive a row of data from SQLite.
  */
 int populate_callback(void* opaque_data, int column_count, char** result_columns, char** column_names) {
-	fprintf(stderr, "%d", column_count);
+	swtodo_t *mytodo;
+	mytodo = malloc(sizeof(swtodo_t));
+	assert(mytodo != NULL);
+	mytodo->flags = 0;
+	mytodo->title = SWTD_UNTITLED;
+
+	for (int i = 0; i < column_count; i++) {
+		fprintf(stderr, "%d: %s %s\n", i, result_columns[i], column_names[i]);
+		switch(i) {
+			case 0:
+			break;
+			case 1:
+				mytodo->flags = atoi(result_columns[i]);
+			break;
+			case 2:
+				mytodo->title = strdup(result_columns[i]);
+			break;
+		}
+	}
+
+	// init todo_list
+	if (todo_list == NULL) {
+		todo_list = malloc(sizeof(swtodo_list_t));
+		assert(todo_list != NULL);
+		todo_list->todo = mytodo;
+		todo_list->next = NULL;
+	}
+	else {
+		// find the end of todo_list by traversing through
+		swtodo_list_t *current_list_item = todo_list;
+		while (current_list_item->next != NULL) {
+			current_list_item = current_list_item->next;
+		}
+		
+		// create a new list item -- set next of previous to that item
+		swtodo_list_t *new_list_item = malloc(sizeof(swtodo_list_t));
+		assert(new_list_item != NULL);
+
+		new_list_item->todo = mytodo;
+		new_list_item->next = NULL;
+		current_list_item->next = new_list_item;
+	}	
+
 }
 
 /**
@@ -301,6 +343,21 @@ int populate_callback(void* opaque_data, int column_count, char** result_columns
  */
 void populate_list_from_db() {
 	char *err_msg = 0;
+
+	// try to create table
+	sqlite3_exec(db,
+	"CREATE TABLE IF NOT EXISTS todos (id INTEGER PRIMARY KEY AUTOINCREMENT, flags INTEGER, title TEXT);",
+	NULL,
+	NULL,
+	&err_msg
+	);
+
+	if (err_msg != NULL) {
+		fprintf(stderr, "Failed to create table: %s\n", err_msg);
+		sqlite3_free(err_msg); 
+	}
+
+	// what happens to err_msg here if it's used already, but we free()d it???
 
 	sqlite3_exec(db,
 	"SELECT * FROM todos",

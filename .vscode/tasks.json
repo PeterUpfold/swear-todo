@@ -45,7 +45,8 @@
             "command": "/usr/bin/gcc-8",
             "args": [
                 "-lncurses",
-                "-lmenu"
+                "-lmenu",
+                "-lsqlite3",
                 "-g",
                 "${file}",
                 "-o",
