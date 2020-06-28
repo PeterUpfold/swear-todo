@@ -101,13 +101,13 @@ int main(int argc, char * argv[]) {
  * the string
  */
 int contains_nonprintables(char * new_name) {
-	char * strpointer = &new_name;
+	//char * strpointer = new_name;
 	do {
-		if (!isprint((int)*strpointer)) {
+		if (!isprint((int)*new_name)) {
 			return 1;	
 		}
-		strpointer++;
-	} while (*strpointer != '\0');
+		new_name++;
+	} while (*new_name != '\0');
 	return 0;
 }
 
@@ -206,6 +206,8 @@ ITEM ** build_menu_items() {
 
 		current_item = current_item->next;
 	}
+
+	// ?? \now we want to use the opaque reference in the menu item so we can track todos by ID??
 
 	our_menu_items[i+1] = (ITEM *)NULL;
 	return our_menu_items;
