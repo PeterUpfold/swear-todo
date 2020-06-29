@@ -13,6 +13,7 @@
 #include "swtd_strings.h"
 
 typedef struct swtodo {
+	int id;
 	int flags;
 	char * title;
 } swtodo_t;
@@ -26,6 +27,11 @@ MENU *swtd_menu;
 swtodo_list_t *todo_list;
 sqlite3* db;
 
+/**
+ * Application entry point
+ * 
+ * @return exit code
+ */
 int main(int argc, char * argv[]) {
 
 	// open database
@@ -123,6 +129,7 @@ void new_pressed() {
 	swtodo_t *mytodo;
 	mytodo = malloc(sizeof(swtodo_t));
 	assert(mytodo != NULL);
+	mytodo->id = SWTD_NOID;
 	mytodo->flags = 0;
 	mytodo->title = SWTD_UNTITLED;
 
@@ -150,8 +157,6 @@ void new_pressed() {
 	}	
 
 	build_refreshed_menu();
-
-	//trace_output("New item spawned");
 }
 
 /**
@@ -233,6 +238,8 @@ void instruction_line(const char * instruction_string) {
 void tidy_menu() {
 	assert(swtd_menu != NULL);
 
+	erase();
+
 	ITEM ** items = menu_items(swtd_menu);
 	for (int i = 0; i < item_count(swtd_menu); i++) {
 		assert(items[i] != NULL);
@@ -282,6 +289,7 @@ void edit_pressed(const char * item_name, ITEM * item, int index) {
 	}
 
 	swtodo_t *target = current_list_item->todo;
+	free(target->title);
 	target->title = strdup(new_name); // when do we need to free() this?
 
 	// refresh menu
@@ -305,6 +313,7 @@ int populate_callback(void* opaque_data, int column_count, char** result_columns
 		fprintf(stderr, "%d: %s %s\n", i, result_columns[i], column_names[i]);
 		switch(i) {
 			case 0:
+				mytodo->id = atoi(result_columns[i]);
 			break;
 			case 1:
 				mytodo->flags = atoi(result_columns[i]);
@@ -357,6 +366,7 @@ void populate_list_from_db() {
 	if (err_msg != NULL) {
 		fprintf(stderr, "Failed to create table: %s\n", err_msg);
 		sqlite3_free(err_msg); 
+		err_msg = 0;
 	}
 
 	// what happens to err_msg here if it's used already, but we free()d it???
@@ -371,6 +381,49 @@ void populate_list_from_db() {
 	if (err_msg != NULL) {
 		fprintf(stderr, "%s\n", err_msg);
 		sqlite3_free(err_msg);
+		err_msg = 0;
 	}
 }
 
+/**
+ * Save the specified todo in the SQLite DB.
+ * 
+ * @return 1 if success, 0 otherwise
+ */
+int save_todo(swtodo_t * todo) {
+	sqlite3_stmt *statement;
+	char *err_msg = 0;
+	char *sql = "";
+
+	if (todo->id == SWTD_NOID) {
+		// create for the first time
+		sql = "INSERT INTO todos (flags, title) VALUES (?, ?)";
+	}
+	else {
+		sql = "UPDATE todos SET flags = ?, title = ? WHERE id = ?";
+	}
+
+	if (sqlite3_prepare_v2(db, sql, -1, &statement, 0) != SQLITE_OK) {
+		fprintf(stderr, "%s\n", err_msg);
+		sqlite3_free(err_msg);
+		err_msg = 0;
+		return 0;
+	}
+
+	sqlite3_bind_int(statement, 1, todo->flags);
+	sqlite3_bind_text(statement,
+	2,
+	todo->title,
+	strlen(todo->title),
+	/* number of bytes, not actually string length in case of utf-8 */
+	SQLITE_STATIC /* is this correct? */
+	);
+
+	if (todo->id != SWTD_NOID) {
+		sqlite3_bind_int(statement, 3, todo->id);
+	}
+
+	sqlite3_step(statement); //TODO what does the return value end up being here?
+	sqlite3_finalize(statement);
+	return 1;
+}

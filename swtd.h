@@ -1,3 +1,5 @@
+#define SWTD_NOID -1
+
 void new_pressed();
 void edit_pressed(const char * item_name, ITEM * item, int index);
 void trace_output(const char * trace_string);
