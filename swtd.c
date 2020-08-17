@@ -189,10 +189,6 @@ ITEM ** build_menu_items() {
 		} while (current_item != NULL);
 	}
 
-	//char trace_string[32];
-	//snprintf(trace_string, 32, "item count: %d", item_count);
-	//trace_output(trace_string);
-
 	our_menu_items = (ITEM **)calloc(item_count + 2 /* size of plus one null item */, sizeof(ITEM *));
 
 	our_menu_items[0] = new_item(SWTD_NEW, SWTD_NEW);
