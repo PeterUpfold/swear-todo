@@ -287,8 +287,8 @@ void edit_pressed(const char * item_name, ITEM * item, int index) {
 	swtodo_t *target = current_list_item->todo;
 	char * old_title = target->title;
 	target->title = strdup(new_name); // when do we need to free() this?
-	// TODO: need a better approach
-	if (old_title != SWTD_UNTITLED) {
+
+	if (strcmp(old_title, SWTD_UNTITLED) != 0) {
 		// only free old title if it is actually from malloc-- the static string
 		// is in rdata presumably and is invalid for free'ing
 		free(old_title);
@@ -434,7 +434,7 @@ int save_todo(swtodo_t * todo) {
 		sqlite3_bind_int(statement, 3, todo->id);
 	}
 
-	sqlite_retval = sqlite3_step(statement); //TODO what does the return value end up being here?
+	sqlite_retval = sqlite3_step(statement);
 	if (sqlite_retval != SQLITE_DONE && sqlite_retval != SQLITE_OK) {
 		fprintf(stderr, "SQLite returned unexpected %d when trying to save with sqlite3_step on statement '%s'", sqlite_retval, sql);
 		return sqlite_retval;
