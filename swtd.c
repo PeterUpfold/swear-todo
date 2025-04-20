@@ -71,9 +71,26 @@ int main(int argc, char * argv[]) {
 			case KEY_DOWN:
 			menu_driver(swtd_menu, REQ_DOWN_ITEM);
 			break;
+
 			case KEY_UP:
 			menu_driver(swtd_menu, REQ_UP_ITEM);
 			break;
+
+			case KEY_DC:
+			// delete the selected item
+			items = menu_items(swtd_menu);
+
+			for (int i = 0; i < item_count(swtd_menu); i++) {
+				if (strncmp(item_name(items[i]), SWTD_NEW, sizeof(item_name(items[i]))) == 0) {
+					// cannot delete dummy new item
+					continue;
+				}
+				if (current_item(swtd_menu) == items[i]) {
+					delete_pressed(item_name(items[i]), items[i], i-1 /* excl. NEW */);
+				}
+			}
+			break;
+
 			case 10: /* Enter */
 
 			items = menu_items(swtd_menu);
@@ -302,6 +319,69 @@ void edit_pressed(const char * item_name, ITEM * item, int index) {
 	build_refreshed_menu();
 
 	trace_output(new_name);
+}
+
+/**
+ * Handle pressing delete on a valid item.
+ */
+void delete_pressed(const char * item_name, ITEM * item, int index) {
+	/*
+	 we will need to:
+	  * delete from the linked list and fix the next ptrs
+	  * tidy memory associated with that swtodo_t
+	  * delete from SQLite and commit
+	  * refresh the view
+	*/
+
+	// follow the linked list until we find it
+	swtodo_list_t *current_list_item = todo_list;
+	swtodo_list_t *prev_list_item = todo_list;
+	swtodo_list_t *next_list_item = todo_list;
+
+
+	for (int i = 0; i < index; i++) {
+		if (i == index - 1) {
+			prev_list_item = current_list_item->next;
+			assert(prev_list_item != NULL);
+			assert(prev_list_item != todo_list); //TODO -- is this approprirate here?
+		}
+
+		assert(current_list_item != NULL);
+		assert(current_list_item->next != NULL);
+		current_list_item = current_list_item->next;
+
+
+		// get the next one
+		next_list_item = current_list_item->next; //perfectly valid for this to be NULL now -- if end of list
+
+		assert(current_list_item != todo_list);
+	}
+
+	swtodo_t *target = current_list_item->todo;
+
+	// fix the next pointer of the previous item#
+	//TODO: what happens if we delete the only item?
+	prev_list_item->next = &next_list_item;
+
+	// to free, we need to:
+	// - free the string
+	// - free the swotodo_t struct
+	// - free the swotod_list_t struct
+	assert(current_list_item->todo != NULL);
+	assert(current_list_item->todo->title != NULL);
+	free(current_list_item->todo->title);
+	current_list_item->todo->title = NULL;
+
+	free(current_list_item->todo);
+	current_list_item->todo = NULL;
+
+	free(current_list_item);
+	current_list_item = NULL;	
+
+	// TODO: delete from SQlite
+
+	build_refreshed_menu();
+
 }
 
 /**
