@@ -285,8 +285,9 @@ void edit_pressed(const char * item_name, ITEM * item, int index) {
 	}
 
 	swtodo_t *target = current_list_item->todo;
-	free(target->title);
+	char * old_title = target->title;
 	target->title = strdup(new_name); // when do we need to free() this?
+	free(old_title);
 
 	// refresh menu
 	tidy_menu();
