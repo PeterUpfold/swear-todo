@@ -287,11 +287,15 @@ void edit_pressed(const char * item_name, ITEM * item, int index) {
 	swtodo_t *target = current_list_item->todo;
 	char * old_title = target->title;
 	target->title = strdup(new_name); // when do we need to free() this?
+	// TODO: need a better approach
 	if (old_title != SWTD_UNTITLED) {
 		// only free old title if it is actually from malloc-- the static string
 		// is in rdata presumably and is invalid for free'ing
 		free(old_title);
 	}
+
+	// save it
+	save_todo(target);
 
 	// refresh menu
 	tidy_menu();
@@ -302,6 +306,8 @@ void edit_pressed(const char * item_name, ITEM * item, int index) {
 
 /**
  * Receive a row of data from SQLite.
+ * 
+ * @returns zero if all is well, non-zero to abort
  */
 int populate_callback(void* opaque_data, int column_count, char** result_columns, char** column_names) {
 	swtodo_t *mytodo;
@@ -346,7 +352,9 @@ int populate_callback(void* opaque_data, int column_count, char** result_columns
 		new_list_item->todo = mytodo;
 		new_list_item->next = NULL;
 		current_list_item->next = new_list_item;
-	}	
+	}
+
+	return SQLITE_OK; // allow this to continue and be called again
 
 }
 
@@ -371,6 +379,7 @@ void populate_list_from_db() {
 	}
 
 	// what happens to err_msg here if it's used already, but we free()d it???
+	// I think it's on the stack so it doens't matter?
 
 	sqlite3_exec(db,
 	"SELECT * FROM todos",
@@ -389,12 +398,13 @@ void populate_list_from_db() {
 /**
  * Save the specified todo in the SQLite DB.
  * 
- * @return 1 if success, 0 otherwise
+ * @return 0 if success, non-zero SQLite error code otherwise
  */
 int save_todo(swtodo_t * todo) {
 	sqlite3_stmt *statement;
 	char *err_msg = 0;
 	char *sql = "";
+	int sqlite_retval = -1;
 
 	if (todo->id == SWTD_NOID) {
 		// create for the first time
@@ -424,7 +434,17 @@ int save_todo(swtodo_t * todo) {
 		sqlite3_bind_int(statement, 3, todo->id);
 	}
 
-	sqlite3_step(statement); //TODO what does the return value end up being here?
-	sqlite3_finalize(statement);
-	return 1;
+	sqlite_retval = sqlite3_step(statement); //TODO what does the return value end up being here?
+	if (sqlite_retval != SQLITE_DONE && sqlite_retval != SQLITE_OK) {
+		fprintf(stderr, "SQLite returned unexpected %d when trying to save with sqlite3_step on statement '%s'", sqlite_retval, sql);
+		return sqlite_retval;
+	}
+
+	sqlite_retval = sqlite3_finalize(statement);
+	if (sqlite_retval != SQLITE_OK) {
+		fprintf(stderr, "SQLite returned unexpected %d when trying to save with sqlite3_finalize on statement '%s'", sqlite_retval, sql);
+		return sqlite_retval;
+	}
+
+	return sqlite_retval;
 }
