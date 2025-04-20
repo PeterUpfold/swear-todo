@@ -65,7 +65,7 @@ int main(int argc, char * argv[]) {
 	post_menu(swtd_menu);
 	refresh();
 
-	while ((current_char != KEY_F(1))) {
+	while ((current_char != KEY_F(1)) && (current_char != (int)'q')) {
 		current_char = getch();
 		switch(current_char) {
 			case KEY_DOWN:
