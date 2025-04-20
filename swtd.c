@@ -287,7 +287,11 @@ void edit_pressed(const char * item_name, ITEM * item, int index) {
 	swtodo_t *target = current_list_item->todo;
 	char * old_title = target->title;
 	target->title = strdup(new_name); // when do we need to free() this?
-	free(old_title);
+	if (old_title != SWTD_UNTITLED) {
+		// only free old title if it is actually from malloc-- the static string
+		// is in rdata presumably and is invalid for free'ing
+		free(old_title);
+	}
 
 	// refresh menu
 	tidy_menu();

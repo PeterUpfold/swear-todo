@@ -29,7 +29,10 @@
                 "-g",
                 "${file}",
                 "-o",
-                "${fileDirname}/${fileBasenameNoExtension}"
+                "${fileDirname}/${fileBasenameNoExtension}",
+                "-lncurses",
+                "-lmenu",
+                "-lsqlite3"
             ],
             "options": {
                 "cwd": "/usr/bin"
