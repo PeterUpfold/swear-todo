@@ -341,9 +341,9 @@ void delete_pressed(const char * item_name, ITEM * item, int index) {
 
 	for (int i = 0; i < index; i++) {
 		if (i == index - 1) {
-			prev_list_item = current_list_item->next;
+			prev_list_item = current_list_item;
 			assert(prev_list_item != NULL);
-			assert(prev_list_item != todo_list); //TODO -- is this approprirate here?
+			//assert(prev_list_item != todo_list); //TODO -- is this approprirate here?
 		}
 
 		assert(current_list_item != NULL);
@@ -361,7 +361,7 @@ void delete_pressed(const char * item_name, ITEM * item, int index) {
 
 	// fix the next pointer of the previous item#
 	//TODO: what happens if we delete the only item?
-	prev_list_item->next = &next_list_item;
+	prev_list_item->next = next_list_item;
 
 	// to free, we need to:
 	// - free the string
