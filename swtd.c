@@ -374,6 +374,10 @@ void delete_pressed(const char * item_name, ITEM * item, int index) {
 		prev_list_item->next = next_list_item;
 	}
 
+	// delete from SQLite
+	assert(target != NULL);
+	delete_todo(target);
+
 	// to free, we need to:
 	// - free the string
 	// - free the swotodo_t struct
@@ -393,7 +397,6 @@ void delete_pressed(const char * item_name, ITEM * item, int index) {
 	free(current_list_item);
 	current_list_item = NULL;	
 
-	// TODO: delete from SQlite
 
 	build_refreshed_menu();
 
@@ -541,6 +544,45 @@ int save_todo(swtodo_t * todo) {
 	sqlite_retval = sqlite3_finalize(statement);
 	if (sqlite_retval != SQLITE_OK) {
 		fprintf(stderr, "SQLite returned unexpected %d when trying to save with sqlite3_finalize on statement '%s'", sqlite_retval, sql);
+		return sqlite_retval;
+	}
+
+	return sqlite_retval;
+}
+
+/**
+ * Delete the specified todo in the SQLite DB.
+ * 
+ * @return 0 if success, non-zero SQLite error code otherwise
+ */
+int delete_todo(swtodo_t * todo) {
+	sqlite3_stmt *statement;
+	char *err_msg = 0;
+	char *sql = "";
+	int sqlite_retval = -1;
+
+	assert(todo->id != SWTD_NOID);
+
+	sql = "DELETE FROM todos WHERE id = ?";
+
+	if (sqlite3_prepare_v2(db, sql, -1, &statement, 0) != SQLITE_OK) {
+		fprintf(stderr, "%s\n", err_msg);
+		sqlite3_free(err_msg);
+		err_msg = 0;
+		return 0;
+	}
+
+	sqlite3_bind_int(statement, 1, todo->id);
+
+	sqlite_retval = sqlite3_step(statement);
+	if (sqlite_retval != SQLITE_DONE && sqlite_retval != SQLITE_OK) {
+		fprintf(stderr, "SQLite returned unexpected %d when trying to delete with sqlite3_step on statement '%s'", sqlite_retval, sql);
+		return sqlite_retval;
+	}
+
+	sqlite_retval = sqlite3_finalize(statement);
+	if (sqlite_retval != SQLITE_OK) {
+		fprintf(stderr, "SQLite returned unexpected %d when trying to delete with sqlite3_finalize on statement '%s'", sqlite_retval, sql);
 		return sqlite_retval;
 	}
 
