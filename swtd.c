@@ -376,7 +376,9 @@ void delete_pressed(const char * item_name, ITEM * item, int index) {
 
 	// delete from SQLite
 	assert(target != NULL);
-	delete_todo(target);
+	if (target->id != SWTD_NOID) {
+		delete_todo(target);
+	}
 
 	// to free, we need to:
 	// - free the string
@@ -477,6 +479,7 @@ void populate_list_from_db() {
 		fprintf(stderr, "Failed to create table: %s\n", err_msg);
 		sqlite3_free(err_msg); 
 		err_msg = 0;
+		return;
 	}
 
 	// what happens to err_msg here if it's used already, but we free()d it???
