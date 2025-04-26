@@ -87,6 +87,7 @@ int main(int argc, char * argv[]) {
 				}
 				if (current_item(swtd_menu) == items[i]) {
 					delete_pressed(item_name(items[i]), items[i], i-1 /* excl. NEW */);
+					break;
 				}
 			}
 			break;
@@ -359,9 +360,19 @@ void delete_pressed(const char * item_name, ITEM * item, int index) {
 
 	swtodo_t *target = current_list_item->todo;
 
-	// fix the next pointer of the previous item#
-	//TODO: what happens if we delete the only item?
-	prev_list_item->next = next_list_item;
+
+	if (index == 0) {
+		// set the pointer to the startof the list to the next item
+		next_list_item = current_list_item->next; //perfectly valid for this to be NULL now -- if end of list
+		todo_list = next_list_item;
+
+		// if it is in fact NULL, we now have an empty list and we will need a dummy item?
+		//TODO what do?
+	}
+	else {
+		// fix the next pointer of the previous item
+		prev_list_item->next = next_list_item;
+	}
 
 	// to free, we need to:
 	// - free the string
@@ -369,7 +380,11 @@ void delete_pressed(const char * item_name, ITEM * item, int index) {
 	// - free the swotod_list_t struct
 	assert(current_list_item->todo != NULL);
 	assert(current_list_item->todo->title != NULL);
-	free(current_list_item->todo->title);
+	if (strcmp(current_list_item->todo->title, SWTD_UNTITLED) != 0) {
+		// only free old title if it is actually from malloc-- the static string
+		// is in rdata presumably and is invalid for free'ing
+		free(current_list_item->todo->title);
+	}
 	current_list_item->todo->title = NULL;
 
 	free(current_list_item->todo);
@@ -406,6 +421,9 @@ int populate_callback(void* opaque_data, int column_count, char** result_columns
 				mytodo->flags = atoi(result_columns[i]);
 			break;
 			case 2:
+				if (strcmp(result_columns[i], SWTD_UNTITLED) == 0) {
+					mytodo->title = strdup("invalid name");
+				}
 				mytodo->title = strdup(result_columns[i]);
 			break;
 		}
